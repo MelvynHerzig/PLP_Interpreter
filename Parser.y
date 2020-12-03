@@ -30,7 +30,8 @@ import Lexer
 
 
  -- Définition des priorités et associativités
-%right in else 
+%right in 
+%right else 
 %left '<'
 %left '+' '-'
 %left '*' '/'
@@ -39,13 +40,16 @@ import Lexer
 
 -- Règles de la grammaire
 
-Prg : Expr   { Prg [] $1}
- | FDef Prg  { let Prg defs expr = $2 in Prg ($1:defs) expr}
+-- Prg : Expr   { Prg [] $1}
+-- | FDef Prg  { let Prg defs expr = $2 in Prg ($1:defs) expr}
 
-FDef : define funName ArgsDef '=' Expr {FDef $2 $3 $5}
+Prg : Expr   { ExprSimple $1 }
+ | FDef { DefSimple $1 }
 
-ArgsDef : {- empty -} {[]}
- | varName ArgsDef { ($1:$2) }
+FDef : define funName Args '=' Expr {FDef $2 $3 $5}
+
+Args : {- empty -} {[]}
+ | varName Args { ($1:$2) }
 
 Expr : let varName '=' Expr in Expr { Let $2 $4 $6 }
  | if Expr then Expr else Expr { If $2 $4 $6 }
@@ -56,10 +60,10 @@ Expr : let varName '=' Expr in Expr { Let $2 $4 $6 }
  | Expr '<' Expr { Bin '<' $1 $3 }
  | '(' '-' Expr ')' { Una '-' $3 }
  | '(' '+' Expr ')' { Una '+' $3 }
- | '#' Expr { Una '#' $2 }
+ | '(' '#' Expr ')' { Una '#' $2 }
  | integer { Cst $1 }
  | varName { Var $1 }
- | funName '(' Exprs ')' {AppFun $1 $3}
+ | funName '(' Exprs ')' {FApp $1 $3}
  | '(' Expr ')' {$2}
 
 Exprs: {- empty -} { [] }
@@ -70,7 +74,9 @@ parseError :: [Token] -> a
 parseError _ = error "Parse error"
 
 -- Définition du type Exp utilisé pour construire l'arbre syntaxique.
-data Exp  = Let Name Exp Exp | Bin Char Exp Exp | Cst Int | Var Name | If Exp Exp Exp | Una Char Exp | AppFun Name [Exp] deriving Show
+data Exp  = Let Name Exp Exp | Bin Char Exp Exp | Cst Int | Var Name | If Exp Exp Exp | Una Char Exp | FApp Name [Exp] deriving Show
 data FDef = FDef Name [Name] Exp deriving Show
-data Prg  = Prg [FDef] Exp deriving Show
+
+-- data Prg  = Prg [FDef] Exp deriving Show
+data Prg  = ExprSimple Exp | DefSimple FDef deriving Show
 }
