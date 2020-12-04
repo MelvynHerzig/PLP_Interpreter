@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-unused-binds -fno-warn-missing-signatures #-}
 {-# LANGUAGE CPP #-}
-{-# LINE 1 "lexer.x" #-}
+{-# LINE 2 "lexer.x" #-}
 
 -- Définition du nom du module et des exports.
 module Lexer (lexer, Name, Token(..)) where
@@ -4378,7 +4378,7 @@ alex_actions = array (0 :: Int, 26)
   , (0,alex_action_12)
   ]
 
-{-# LINE 30 "lexer.x" #-}
+{-# LINE 31 "lexer.x" #-}
 
 -- Définition du type Token.
 type Name = [Char]
