@@ -32,7 +32,8 @@ eval (Una c exp) env
 eval (Var name) env = value name env
 
 eval (FApp func xs) env = 
-    eval x $ expand env vars xs where (vars, x) = extract func env
+    eval x $ expand env (if length xs /= length vars then error "Invalid arg count" else vars) xs 
+    where (vars, x) = extract func env
 
 -- Ajoute la fonction à l'environnement
 addFunction (FDef name args exp) = (name,args,exp)
@@ -50,7 +51,7 @@ expand env (v:vs) (x:xs) = ((v, eval x env):vars, funcs)
 -- Récupération d'une variable
 value name (vars,_) = value' name vars
  where 
-     value' name [] = 0
+     value' name [] = error $ "Out of scope variable " ++ name
      value' name ((var,val):vars) =
         if var == name then val else value' name vars
 
