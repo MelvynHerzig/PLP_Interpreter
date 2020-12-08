@@ -21,7 +21,7 @@ eval (Let name exp1 exp2) env@(vars,funcs) = eval exp2 ((name, eval exp1 env):va
 eval (Cst n) _ = n
 
 eval (If cond x y) env = 
-    if (eval cond env) > 0  then eval x env
+    if (eval cond env) /= 0  then eval x env
                             else eval y env 
 
 eval (Una c exp) env
@@ -35,15 +35,11 @@ eval (FApp func xs) env =
     eval x $ expand env (if length xs /= length vars then error "Invalid arg count" else vars) xs 
     where (vars, x) = extract func env
 
--- Ajoute la fonction à l'environnement
-addFunction (FDef name args exp) = (name,args,exp)
+-- Lecture d'une ligne, retourne un tuple ( "Valeur à afficher", [fonctions de l'environnement augmenté])
+readProg (ExprSimple exp) env@(vars, funcs) = let val = eval exp env in (show val, funcs)
+readProg (DefSimple (FDef fname args exp)) (vars, funcs) = (fname, (fname,args,exp):funcs)
 
--- Lecture d'une ligne
-readProg (ExprSimple exp) env@(vars, funcs) = let val = eval exp env in (("a",val):vars, funcs)
-readProg (DefSimple fdef) (vars, funcs) = let val = addFunction fdef in (vars, val:funcs)
-
-
--- Expansion de l'environnement
+-- Expansion de l'environnement des variables
 expand env [] [] = env
 expand env (v:vs) (x:xs) = ((v, eval x env):vars, funcs)
  where (vars, funcs) = expand env vs xs
@@ -62,23 +58,18 @@ extract name (_,funcs) = extract' name funcs
     extract' name ((func,vars,body):funcs) =
         if func == name then (vars,body) else extract' name funcs
 
-getFName (name,_,_) = name
-getResult (_, num) = num
-
 repl funcs = 
     do
         putStr "SPL>"
         line <- getLine
-        let tokens = lexer line
+        let tokens = lexer line -- Récupération des tokens
         putStrLn $ show tokens
-        let ast = parser tokens
+        let ast = parser tokens -- Récupération de l'arbre syntaxique
         putStrLn $ show ast
-        let tempEnv = readProg ast ([],funcs)
-        if(null $ fst tempEnv) then putStrLn $ getFName $ (snd tempEnv) !! 0 
-                               else putStrLn $ show $ getResult $ (fst tempEnv) !! 0 
-        repl (if(null $ fst tempEnv) then ((snd tempEnv) !! 0):funcs else funcs)
+        let (toPrint, funcsIncreased) = readProg ast ([],funcs) -- Evaluation
+        putStrLn toPrint
+        repl funcsIncreased
 
 launchRepl = repl [("Pred", ["n"],(Bin '-' (Var "n") (Cst 1))),
                    ("Fact", ["n"],(If (Bin '<' (Var "n") (Cst 1)) (Cst 1) (Bin '*' (Var "n") (FApp "Fact" [FApp "Pred" [Var "n"]])))),
-                   ("SphericINTSurface", ["radius"], (Bin '*' (Bin '*' (Bin '*' (Cst 4) (FApp "PI" [])) (Var "radius")) (Var "radius"))),
                    ("Surface", ["x","y"], (If (Bin '<' (Cst 0) (Var "x")) (If (Bin '<' (Cst 0) (Var "y")) (Bin '*' (Var "x") (Var "y")) (Una '-' (Cst 1))) (Una '-' (Cst 1))))]
