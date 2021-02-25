@@ -41,7 +41,7 @@ import Lexer
 
 -- Règles de la grammaire
 
--- Prg : Expr   { Prg [] $1}
+--Prg : Expr   { Prg [] $1}
 -- | FDef Prg  { let Prg defs expr = $2 in Prg ($1:defs) expr}
 
 Prg : Expr   { ExprSimple $1 }
@@ -78,6 +78,6 @@ parseError _ = error "Parse error"
 data Exp  = Let Name Exp Exp | Bin Char Exp Exp | Cst Int | Var Name | If Exp Exp Exp | Una Char Exp | FApp Name [Exp] deriving Show
 data FDef = FDef Name [Name] Exp deriving Show
 
--- data Prg  = Prg [FDef] Exp deriving Show
+--data Prg  = Prg [FDef] Exp deriving Show
 data Prg  = ExprSimple Exp | DefSimple FDef deriving Show
 }
